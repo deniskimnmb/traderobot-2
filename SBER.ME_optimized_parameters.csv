@@ -1,0 +1,6 @@
+Стратегия,Доходность,Лучшие параметры
+MA Crossover,141.15403416249563,"short=50, long=150"
+RSI,70.80090958594755,"period=14, уровни=25/65"
+MACD,296.2316779756384,"fast=14, slow=25, signal=9"
+Bollinger Bands,-17.590425260578645,"window=25, std_dev=2.0"
+Volume Spike,134.46335738072133,"multiplier=2.0, window=15"
