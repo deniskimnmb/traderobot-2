@@ -27,7 +27,7 @@
 1. Клонируйте репозиторий через командную строку:
 ```'python'
 git clone https://github.com/deniskimnmb/traderobot-2.git
-cd ваше название
+cd traderobot-2
 ```
 2. Установите зависимости:
 ```
