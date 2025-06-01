@@ -24,7 +24,7 @@
 
 ### Пошаговая инструкция по запуску
 
-1. Клонируйте репозиторий через командную строку:
+1. Клонируйте репозиторий:
 ```'python'
 git clone https://github.com/deniskimnmb/traderobot-2.git
 cd traderobot-2
