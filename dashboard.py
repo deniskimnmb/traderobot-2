@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
+#Стратегия пересечения скользящих средних
 def ma_crossover_strategy(data, short_window=20, long_window=50):
-    """Стратегия пересечения скользящих средних"""
     signals = pd.DataFrame(index=data.index)
     signals['price'] = data['Close']
     signals['short_ma'] = data['Close'].rolling(window=short_window).mean()
@@ -18,8 +18,8 @@ def ma_crossover_strategy(data, short_window=20, long_window=50):
     signals['positions'] = signals['signal'].diff()
     return signals
 
+#Стратегия RSI (индекс относительной силы)
 def rsi_strategy(data, period=14, low=30, high=70):
-    """Стратегия RSI (индекс относительной силы)"""
     delta = data['Close'].diff()
     gain = delta.where(delta > 0, 0)
     loss = -delta.where(delta < 0, 0)
@@ -38,8 +38,8 @@ def rsi_strategy(data, period=14, low=30, high=70):
     signals['positions'] = signals['signal'].diff()
     return signals
 
+#Стратегия MACD
 def macd_strategy(data, fast=12, slow=26, signal=9):
-    """Стратегия MACD"""
     exp1 = data['Close'].ewm(span=fast, adjust=False).mean()
     exp2 = data['Close'].ewm(span=slow, adjust=False).mean()
     macd = exp1 - exp2
@@ -53,8 +53,8 @@ def macd_strategy(data, fast=12, slow=26, signal=9):
     signals['positions'] = signals['signal'].diff()
     return signals
 
+#Стратегия Bollinger Bands
 def bollinger_strategy(data, window=20, std_dev=2):
-    """Стратегия Bollinger Bands"""
     rolling_mean = data['Close'].rolling(window=window).mean()
     rolling_std = data['Close'].rolling(window=window).std()
     
@@ -70,8 +70,8 @@ def bollinger_strategy(data, window=20, std_dev=2):
     signals['positions'] = signals['signal'].diff()
     return signals
 
+#Стратегия Volume Spike
 def volume_spike_strategy(data, multiplier=2, window=20):
-    """Стратегия Volume Spike"""
     avg_volume = data['Volume'].rolling(window=window).mean()
     signals = pd.DataFrame(index=data.index)
     signals['price'] = data['Close']
@@ -190,6 +190,7 @@ def optimize_volume(data, multiplier_range, window_range):
                     
     return best_return, best_params
 
+#Функция подсчета выручки если заходим на всю котлету
 def calculate_returns(signals, initial_capital=10000):
     portfolio = pd.DataFrame(index=signals.index)
     portfolio['price'] = signals['price']
@@ -231,8 +232,8 @@ def calculate_returns(signals, initial_capital=10000):
     portfolio['returns'] = portfolio['total'].pct_change()
     return portfolio
 
+#Расчет ключевых метрик
 def calculate_metrics(returns):
-    """Расчет ключевых метрик"""
     total_return = (returns['total'][-1] / returns['total'][0] - 1) * 100
     
     peak = returns['total'].cummax()
@@ -250,7 +251,7 @@ def calculate_metrics(returns):
 
 # Настройка страницы
 st.set_page_config(page_title="Анализ торговых стратегий", layout="wide")
-st.title("📊 Сравнение торговых стратегий")
+st.title("Сравнение торговых стратегий")
 
 # Сайдбар для параметров
 with st.sidebar:
@@ -384,13 +385,16 @@ with tab3:
         ax.bar(volume_signals.index, volume_signals['volume'], label='Объем')
         ax.plot(volume_signals['avg_volume'], label='Средний объем', color='orange')
         ax.set_title('Volume Spike Strategy')
-        
+
     ax.legend()
     st.pyplot(fig)
 
 with tab4:
     st.subheader("Оптимизация параметров стратегий")
     st.info("Оптимизация параметров для достижения максимальной доходности")
+    
+    # Инициализируем переменную для результатов
+    optimization_results = None
     
     if st.button("Запустить оптимизацию"):
         progress_bar = st.progress(0)
@@ -444,14 +448,14 @@ with tab4:
         progress_bar.progress(100)
         
         # Форматирование результатов
-        results = {
+        results_data = {
             "Стратегия": ["MA Crossover", "RSI", "MACD", "Bollinger Bands", "Volume Spike"],
-            "Доходность (%)": [
-                f"+{ma_return:.1f}%" if ma_return > 0 else f"{ma_return:.1f}%",
-                f"+{rsi_return:.1f}%" if rsi_return > 0 else f"{rsi_return:.1f}%",
-                f"+{macd_return:.1f}%" if macd_return > 0 else f"{macd_return:.1f}%",
-                f"+{bb_return:.1f}%" if bb_return > 0 else f"{bb_return:.1f}%",
-                f"+{vol_return:.1f}%" if vol_return > 0 else f"{vol_return:.1f}%"
+            "Доходность": [
+                ma_return,
+                rsi_return,
+                macd_return,
+                bb_return,
+                vol_return
             ],
             "Лучшие параметры": [
                 f"short={ma_params[0]}, long={ma_params[1]}",
@@ -462,23 +466,51 @@ with tab4:
             ]
         }
         
+        # Создаем DataFrame для отображения
+        display_results = pd.DataFrame({
+            "Стратегия": results_data["Стратегия"],
+            "Доходность (%)": [
+                f"+{ma_return:.1f}%" if ma_return > 0 else f"{ma_return:.1f}%",
+                f"+{rsi_return:.1f}%" if rsi_return > 0 else f"{rsi_return:.1f}%",
+                f"+{macd_return:.1f}%" if macd_return > 0 else f"{macd_return:.1f}%",
+                f"+{bb_return:.1f}%" if bb_return > 0 else f"{bb_return:.1f}%",
+                f"+{vol_return:.1f}%" if vol_return > 0 else f"{vol_return:.1f}%"
+            ],
+            "Лучшие параметры": results_data["Лучшие параметры"]
+        })
+        
+        # Сохраняем результаты для выгрузки
+        optimization_results = pd.DataFrame(results_data)
+        st.session_state.optimization_results = optimization_results
+        
         # Отображение результатов
         st.success("Оптимизация завершена!")
-        st.table(pd.DataFrame(results))
+        st.table(display_results)
+    
+    # Если результаты оптимизации доступны в session_state
+    if 'optimization_results' in st.session_state and not st.session_state.optimization_results.empty:
+        st.subheader("Результаты последней оптимизации")
         
-        # Кнопка для применения лучших параметров
-        if st.button("Применить лучшие параметры"):
-            st.session_state.short_window = ma_params[0]
-            st.session_state.long_window = ma_params[1]
-            st.session_state.rsi_period = rsi_params[0]
-            st.session_state.rsi_low = rsi_params[1]
-            st.session_state.rsi_high = rsi_params[2]
-            st.session_state.fast_period = macd_params[0]
-            st.session_state.slow_period = macd_params[1]
-            st.session_state.signal_period = macd_params[2]
-            st.session_state.bb_window = bb_params[0]
-            st.session_state.bb_std = bb_params[1]
-            st.session_state.volume_multiplier = vol_params[0]
-            st.session_state.volume_window = vol_params[1]
-            
-            st.experimental_rerun()
+        # Форматируем для отображения
+        display_df = st.session_state.optimization_results.copy()
+        display_df['Доходность'] = display_df['Доходность'].apply(
+            lambda x: f"+{x:.1f}%" if x > 0 else f"{x:.1f}%"
+        )
+        display_df = display_df.rename(columns={
+            'Доходность': 'Доходность (%)',
+            'Лучшие параметры': 'Лучшие параметры'
+        })
+        
+        st.table(display_df[['Стратегия', 'Доходность (%)', 'Лучшие параметры']])
+        
+        # Кнопка выгрузки в CSV
+        csv = st.session_state.optimization_results.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Выгрузить результаты оптимизации в CSV",
+            data=csv,
+            file_name=f"{ticker}_optimized_parameters.csv",
+            mime='text/csv',
+            help="Скачать таблицу с результатами оптимизации в формате CSV"
+        )
+
+    
